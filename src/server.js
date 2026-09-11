@@ -1,14 +1,13 @@
-import express from "express";
-import {config} from "dotenv";    
-import {connectDB, disconnectDB} from "./config/db.js";
 
+import express from "express";
+import { config } from "dotenv";
+
+import { connectDB, disconnectDB } from "./config/db.js";
 import router from "./routes/index.js";
 
 config();
-connectDB();
 
 const app = express();
-
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,31 +16,65 @@ app.use("/", router);
 
 const PORT = 5001;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+let server;
 
+const startServer = async () => {
+  try {
+    await connectDB();
 
-process.on("unhandledRejection", (err) => {
-    console.error("Unhandled Rejection:", err);
-    server.close(async () => {
-        await disconnectDB();
-        process.exit(1);
+    server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
-});
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
 
-//handle uncaught exceptions
-process.on("uncaughtException", (err) => {
-    console.error("Uncaught Exception:", err);
+// Handle unhandled promise rejections
+process.on("unhandledRejection", async (err) => {
+  console.error("Unhandled Rejection:", err);
+
+  if (server) {
     server.close(async () => {
-        await disconnectDB();
-        process.exit(1);
+      await disconnectDB();
+      process.exit(1);
     });
+  } else {
+    await disconnectDB();
+    process.exit(1);
+  }
 });
 
-//Graceful shutdown
+// Handle uncaught exceptions
+process.on("uncaughtException", async (err) => {
+  console.error("Uncaught Exception:", err);
+
+  if (server) {
+    server.close(async () => {
+      await disconnectDB();
+      process.exit(1);
+    });
+  } else {
+    await disconnectDB();
+    process.exit(1);
+  }
+});
+
+// Graceful shutdown
 process.on("SIGTERM", async () => {
-    console.log("SIGTERM signal received. Closing server...");
+  console.log("SIGTERM signal received. Closing server...");
+
+  if (server) {
+    server.close(async () => {
+      await disconnectDB();
+      process.exit(0);
+    });
+  } else {
     await disconnectDB();
     process.exit(0);
-}); 
+  }
+});
+
+startServer();
+
