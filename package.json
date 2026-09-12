@@ -6,8 +6,7 @@
   "scripts": {
     "start": "tsx src/server.js",
     "dev": "nodemon --exec tsx src/server.js",
-    "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "seed:movies": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",
