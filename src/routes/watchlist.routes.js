@@ -2,6 +2,7 @@ import { Router } from "express";
 import { addToWatchList, removeFromWatchlist, updateWatchlistItem } from "../controllers/watchlistController";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { addToWatchlistSchema } from "../validators/watchlistValidator";
+import { validateRequest } from "../middleware/validateRequest";
 
 const router = Router();
 
